@@ -1,3 +1,6 @@
+// simulador en http://www.iverilog.com/index.php
+// copiar y pegar
+
 //-------------------------- FLUJO DE DATOS
 module mux_flujo_datos(input i0, i1, s, output x);
 	assign x=~s&i0 | s&i1; // se usan las ecuaciones
