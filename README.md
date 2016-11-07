@@ -1,2 +1,2 @@
 # ed2-1617
-Código para la materia de electrónica digital 2
+Códigos verilog para la materia de electrónica digital 2
