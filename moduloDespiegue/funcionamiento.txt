@@ -1,0 +1,59 @@
+out 00		p0 <- acum  leds
+out 01		p1 <- acum  2 nibles derecha
+out 02		p2 <- acum  2 nibles izq.
+out 03		p1 <- acum, p0 <- acum
+
+out 1#		mask OR p1 y p2	(4 bits, 1 desactiva, 0 activa)
+out 2#		blink p1 y p2   (nible mus blink?)
+
+module disp7segx4_test0F(
+		input clk50M,
+		input clk, load1, load0, cmd_in_data,
+		input [7:0] data,
+		output a,b,c,d,e,f,g,dp, output [3:0] anodos
+		);
+	reg [3:0] millares=3, centenas=2,decenas=1, unidades=0;
+	wire cmd_in_data;
+
+	assign cmd_in_data= |data[7:4];  algun bit en 1 en nible alto? es comando
+	reg [3:0] mask=0, blink=0;  // mascara para hacer OR e indicador si debe hacer blink
+	always @(posedge clk) begin
+		if(!cmd_in_data) begin
+			if(load0) begin
+				unidades<=data[3:0];
+				decenas<=data[7:4];
+			end
+			if(load1) begin
+				centenas<=data[3:0];
+				millares<=data[7:4];
+			end
+		else begin  // data is a command
+			case(data[7:4])
+				4b'0001: // mascara para hacer OR los anodos (enable=0, disable=1)
+					mask<=data[3:0];
+				4b'0010: // nible must blink?
+					blink<=data[3:0];
+			endcase
+		end
+	end
+
+	wire [3:0] muxout, anodos_pre;
+	assign anodos=anodos_pre | mask;
+	assign 
+	anodosCtrl AN(clk50M, anodos_pre);
+	mux M(muxout, millares,centenas,decenas,unidades, anodos);
+	decBin7seg BIN7SEG(muxout, {a,b,c,d,e,f,g});
+
+	assign dp=1'b1; // apagado
+endmodule
+
+module anodosCtrl(input clk50M, output [3:0] anodos);
+	reg[20:0] divisor=0; // para el div de frec del despliegue multiplexado
+	reg [3:0] anodoActivo=4'b1110;
+	always @(posedge clk50M)
+		divisor<=divisor+1;
+	always @(posedge divisor[14])
+			anodoActivo={anodoActivo[2:0],anodoActivo[3]}; // corrimiento a la izq.
+	assign anodos=anodoActivo;
+endmodule
+
